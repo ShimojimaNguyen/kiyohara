@@ -1,0 +1,22 @@
+@import "tailwindcss";
+
+/* Token màu/chữ của KIYOHARA. Mọi màu trong JSX phải đi qua đây —
+   hex rời trong component là cách một bảng màu chết dần mà không ai thấy. */
+@theme {
+  --color-bg: #101210;
+  --color-bg-elevated: #171a17;
+  --color-surface: #1c201c;
+  --color-fg: #eceae1;
+  --color-fg-muted: #9b9d93;
+  --color-fg-subtle: #6f736b;
+  --color-accent: #d7ddd0;
+  --color-up: #8aa583;
+  --color-down: #c57d76;
+  --color-warn: #c4a66b;
+
+  --font-display: "Instrument Serif", "Noto Serif JP", serif;
+  --font-sans: "IBM Plex Sans", "Noto Sans JP", system-ui, sans-serif;
+}
+
+html, body { background: var(--color-bg); color: var(--color-fg); }
+body { font-family: var(--font-sans); }

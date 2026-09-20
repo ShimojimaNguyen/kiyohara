@@ -1,0 +1,81 @@
+name: weekly-scan
+
+# Quét dòng ròng tuần cho 492 mã universe rồi commit data/flow-latest.json.
+#
+# LỊCH: 21:00 UTC thứ Sáu = 06:00 JST thứ Bảy. Tuần giao dịch Nhật đóng chiều
+# thứ Sáu, nên tới lúc đó Yahoo đã có bar tuần hoàn chỉnh.
+#
+# NGÀY NGHỈ LỄ: KHÔNG có bảng lịch nào ở đây, và cố tình vậy. Job chỉ hỏi một
+# câu — "nguồn có trả về tuần MỚI không?" — rồi không commit nếu không. Một
+# câu đó xử lý được cả nghỉ lễ, sàn đóng bất thường, lẫn nguồn chậm cập nhật,
+# mà không cần ai bảo trì danh sách ngày lễ.
+
+on:
+  schedule:
+    - cron: "0 21 * * 5"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: weekly-scan
+  cancel-in-progress: false
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+
+      - name: Ghi lại tuần hiện có
+        id: before
+        run: |
+          week=$(node -e "
+            try { console.log(JSON.parse(require('fs').readFileSync('data/flow-latest.json','utf8')).latestWeek ?? '') }
+            catch { console.log('') }
+          ")
+          echo "week=$week" >> "$GITHUB_OUTPUT"
+          echo "tuần đang có: ${week:-chưa có}"
+
+      # Không `npm ci`: scanner chỉ dùng stdlib Node + fetch. Cài 300 package
+      # để chạy một file .ts là đổi thời gian CI lấy hư không.
+      - name: Quét
+        run: node --experimental-strip-types scripts/scan.ts
+
+      - name: Kiểm tuần mới và commit
+        run: |
+          after=$(node -e "console.log(JSON.parse(require('fs').readFileSync('data/flow-latest.json','utf8')).latestWeek)")
+          echo "tuần sau khi quét: $after"
+
+          if [ "$after" = "${{ steps.before.outputs.week }}" ]; then
+            echo "Không có tuần mới (nghỉ lễ, hoặc nguồn chưa cập nhật). Không commit."
+            echo "Quét lại cùng tuần cho ra cùng số — chỉ khác scannedAt, một commit rỗng về nội dung."
+            git checkout -- data/flow-latest.json
+            exit 0
+          fi
+
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/flow-latest.json
+          git commit -m "data: quét tuần $after"
+          git push
+
+      - name: Tóm tắt
+        if: always()
+        run: |
+          node -e "
+            const r = JSON.parse(require('fs').readFileSync('data/flow-latest.json','utf8'));
+            const t = (r.grossTurnoverYen/1e12).toFixed(1);
+            console.log('| chỉ số | giá trị |'); console.log('|---|---|');
+            console.log(\`| tuần dữ liệu | \${r.latestWeek} |\`);
+            console.log(\`| độ phủ | \${r.fetchedCount}/\${r.universeCount} |\`);
+            console.log(\`| lỗi | \${r.failures.length} |\`);
+            console.log(\`| gross turnover | \${t}兆円 |\`);
+          " >> "$GITHUB_STEP_SUMMARY"

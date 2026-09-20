@@ -1,0 +1,20 @@
+node_modules/
+dist/
+.output/
+.vercel/
+.tanstack/
+
+# routeTree.gen.ts KHÔNG ignore: nó do plugin sinh, nhưng `npm run typecheck`
+# và `src/router.tsx` import thẳng từ nó. Ignore đi thì checkout sạch sẽ đỏ
+# typecheck cho tới khi ai đó nhớ chạy build trước. Cùng lý lẽ như universe.ts:
+# artifact sinh ra thì commit, để thay đổi nhìn thấy trong diff.
+
+# Chế độ thử của scanner (`--limit N`) — không phải dữ liệu công bố.
+data/flow-sample.json
+
+# Dữ liệu nguồn tải về khi sinh universe; universe.ts mới là thứ được commit.
+scripts/_jpx/
+*.log
+
+__pycache__/
+*.pyc
