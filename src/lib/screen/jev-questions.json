@@ -1,0 +1,56 @@
+{
+  "_readme": [
+    "NGUỒN SỰ THẬT DUY NHẤT cho các câu hỏi gửi Jev.",
+    "Đọc bởi scripts/build_fx_roles.py (sinh artifact) VÀ src/lib/screen/jev.ts",
+    "(golden test). Để hai bản thì chúng sẽ lệch nhau và không ai biết bản nào",
+    "đang chạy — cùng lý lẽ với việc logic tài chính ở src/lib/screen/ được dùng",
+    "chung giữa app và scanner.",
+    "",
+    "Đổi chữ trong đây = đổi ý nghĩa câu hỏi = phải chạy lại golden test VÀ sinh",
+    "lại fx-roles.ts. Ngưỡng nằm ở jev.ts, không nằm đây.",
+    "",
+    "Tiếng Anh có chủ đích: tài liệu Jev ghi độ chính xác cao nhất ở tiếng Anh,",
+    "CJK thấp hơn. State thì vẫn là tiếng Nhật vì đó là dữ liệu gốc."
+  ],
+
+  "model": "jev-latest",
+
+  "questions": {
+    "fx_revenue": {
+      "type": "noul",
+      "instructions": "Does this company earn a large share of its revenue in foreign currency, mainly US dollars, through exports or overseas sales?",
+      "criteria": {
+        "true": "A large share of revenue is billed in foreign currency, from exports or overseas operations",
+        "false": "Revenue is almost entirely domestic Japanese yen"
+      }
+    },
+    "fx_cost": {
+      "type": "noul",
+      "instructions": "Does this company pay a large share of its costs in foreign currency, mainly US dollars, for imported raw materials, energy, or merchandise?",
+      "criteria": {
+        "true": "A large share of costs is paid in foreign currency for imported inputs, fuel, or goods",
+        "false": "Costs are almost entirely domestic Japanese yen"
+      }
+    }
+  },
+
+  "_wholesale_readme": [
+    "Chỉ hỏi cho mã thuộc 卸売業. `none_of_these` là BẮT BUỘC, không phải cho đẹp:",
+    "đo ngày 2026-09-22, đưa 3382 セブン&アイ (小売業, không phải bán buôn) vào bộ câu",
+    "hỏi này thì Jev trả lời domestic_wholesale với conf=0.97 — chắc nịch cho một",
+    "phương án không hề đúng. Model chọn cái gần nhất trong những cái được đưa ra;",
+    "không đưa lối thoát thì nó không có cách nào nói 'không cái nào cả'."
+  ],
+  "wholesale_question": {
+    "wholesale_kind": {
+      "type": "choice",
+      "instructions": "What kind of wholesale or trading business is this Japanese company?",
+      "criteria": {
+        "sogo_shosha": "A general trading house (総合商社) with global operations spanning resources, energy, machinery and consumer goods, earning heavily in foreign currency",
+        "import_trader": "A specialised trader or distributor whose goods are mainly imported from abroad, paying in foreign currency",
+        "domestic_wholesale": "A wholesaler distributing mainly domestic goods to domestic customers, billed in yen",
+        "none_of_these": "Not a wholesaler or trading company at all, or there is not enough information to tell which of the above it is"
+      }
+    }
+  }
+}

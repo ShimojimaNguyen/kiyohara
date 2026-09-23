@@ -30,6 +30,8 @@ xem có thể ra quyết định tiền bạc dựa trên số bạn hiển th�
 
 - **Phân loại 輸出/輸入 là sector map theo 33業種 của JPX**, KHÔNG phải tỷ trọng
   doanh thu nước ngoài. Mọi chỗ hiển thị phải nói ra giới hạn này.
+  Lớp `fx-roles` (model Jev) chỉ **đối chiếu** với sector map, KHÔNG thay nó —
+  xem §7.
 - **Dòng ròng = close×volume có dấu**, KHÔNG phải 投資部門別 của JPX, KHÔNG phải
   tiền về tài khoản doanh nghiệp.
 - **貿易キャッシュ là đẳng thức kế toán**, không phải dự báo giá.
@@ -80,7 +82,8 @@ xem có thể ra quyết định tiền bạc dựa trên số bạn hiển th�
 | Quét dữ liệu | `scripts/scan.ts`, chạy trong GitHub Actions (~5 phút, 492 request) |
 | Lưu trữ | `data/flow-latest.json` commit vào repo. Interface `store.ts` giữ hình dạng DB để sau thay Neon chỉ là đổi implementation |
 | Universe | `src/lib/screen/universe.ts` **sinh tự động** từ JPX `data_j.xlsx` |
-| Test | `node --experimental-strip-types --test` — không framework |
+| Phán đoán ngoại tệ | Jev (TypeSafe System One) — **chỉ lúc build**, sinh `src/lib/screen/fx-roles.ts`. Xem §7 |
+| Test | `node --experimental-strip-types --test` — không framework. `npm test` không mạng; `npm run test:model` có |
 | Chạy production | `dist/server/server.js` chỉ là `{ fetch(Request) }`, không tự mở cổng. `server/node.mjs` là cầu nối Node + phục vụ `dist/client`. |
 
 Không thêm dependency nếu chưa hỏi. Đặc biệt: **không thêm thư viện đọc Excel** —
@@ -110,7 +113,14 @@ npm run typecheck    # tsc --noEmit
 npm run scan                              # quét 492 mã (~5 phút)
 node --experimental-strip-types scripts/scan.ts --limit 20   # thử nhanh
 py scripts/build_universe.py              # sinh lại universe từ JPX (hàng tháng)
+
+npm run test:model                        # golden test gọi Jev thật (cần TYPESAFE_API_KEY)
+npm run fx-roles                          # sinh fx-roles.ts (~45s, ~$0.015)
+py scripts/build_fx_roles.py --limit 20   # thử — ghi fx-roles.sample.json, KHÔNG đụng artifact
 ```
+
+Khoá chỉ đọc từ env, không bao giờ vào file: `TYPESAFE_API_KEY` (bắt buộc),
+`EDINET_API_KEY` (thiếu thì tự hạ xuống bằng chứng `name_only` và nói ra).
 
 ---
 
@@ -146,3 +156,69 @@ py scripts/build_universe.py              # sinh lại universe từ JPX (hàng 
 - [ ] Mọi tổng có kèm số phần tử đóng góp
 - [ ] Không có chuỗi khuyến nghị mua/bán, không 買い推奨/だろう
 - [ ] Scanner: chạy lại cùng tuần không đổi kết quả (idempotent)
+- [ ] Đụng vào Jev: `npm run test:model` xanh, và tổng 輸出/輸入/商社 **không đổi
+      một chữ số** — lệch nghĩa là phán đoán model đã lọt vào đường tính số
+
+---
+
+## 7. Jev — phán đoán phơi nhiễm ngoại tệ
+
+Jev (TypeSafe System One, `jev-1.13.0`) trả lời câu hỏi **ngữ nghĩa** mà code
+thường không trả lời được: "công ty này thu USD hay trả USD?". Nó **bổ sung**
+cho sector map 33業種, không thay thế.
+
+### 7.1 Nó được phép làm gì
+
+| | |
+|---|---|
+| ✅ Phân loại / phán đoán ngữ nghĩa trên văn bản được cung cấp | |
+| ❌ **Chạm vào bất kỳ con số nào** | Tài liệu Jev: *"is not a calculator"*. Đo thật: yếu ở đếm, so số, đọc ngày. Mọi phép cộng yen, căn tuần, so ngày ở lại trong TS |
+| ❌ **Sinh văn bản** | Model không được huấn luyện để viết. `なぜ` vẫn là template trong code |
+| ❌ **Nằm trong đường xử lý request** | Build-time only. Xem §3 — cùng lý lẽ với job quét |
+
+### 7.2 Bằng chứng quyết định tất cả (đo 2026-09-22, lặp 6 lần, biên 0,01–0,03)
+
+| state đưa vào | 東京瓦斯 cost | 電源開発 | JT rev |
+|---|---|---|---|
+| chỉ tên + 33業種 | 0,44 | 0,49 | 0,56 |
+| + 2–3 câu về cơ cấu ngoại tệ | **0,92** | **0,90** | **0,87** |
+| + Wikipedia (intro / full) | 0,68 / 0,74 | — | — |
+
+Wikipedia **không cứu được**, và bài đầy đủ còn làm tệ đi (太陽誘電 0,70 → 0,59):
+ngữ cảnh thừa là nhiễu chứ không phải thông tin. Nên `evidence` (`edinet` |
+`name_only` | `none`) phải đi kèm mọi phán đoán và **hiện ra trên UI** — 0,85
+dựa trên 有報 khác hẳn 0,85 dựa trên mỗi cái tên.
+
+Đối chứng lành: công ty bịa ra → 0,36/0,30. Jev không dựng khẳng định mạnh từ
+hư không. Golden test chốt ca này lại; **đỏ ở đó thì dừng dùng Jev, không nới ngưỡng.**
+
+### 7.3 Cấu trúc
+
+```
+jev-questions.json   NGUỒN SỰ THẬT DUY NHẤT của câu hỏi — Python builder và
+                     TS test cùng đọc file này. Hai bản sẽ lệch nhau.
+jev.ts               Chính sách: ngưỡng + biến xác suất thành quyết định.
+                     Ở TRONG CODE, không ở trong model.
+build_fx_roles.py    Sinh artifact. Cổng từ chối ghi như build_universe.py.
+fx-roles.ts          Artifact commit, đọc như universe.ts.
+jev.test.ts          Chính sách — không mạng, chạy trong `npm test`.
+jev.model.check.ts   Model — có mạng, chỉ `npm run test:model`.
+```
+
+### 7.4 Luật riêng
+
+1. **Mọi câu `choice` phải có `none_of_these`.** Đo thật: bỏ lối thoát thì
+   セブン&アイ (小売業) nhận `domestic_wholesale` với conf 0,97 — chắc nịch cho một
+   phương án không hề đúng. Có lối thoát thì nó trả `none_of_these` ở 0,95.
+2. **Ngưỡng tin cậy `CONF_MIN`**, dưới đó không hiện gì. 伊藤忠エネクス bị chữ
+   "伊藤忠" đánh lừa → `sogo_shosha` SAI, nhưng conf chỉ 0,20–0,23 tự tố cáo.
+3. **`unclear` không bao giờ là bất đồng.** Không kết luận được thì im lặng;
+   cấm mượn sự im lặng của model để phản đối một phân loại đang có.
+4. **So ngưỡng phải làm tròn trước.** `0.82 − 0.67` = `0.14999999999999991` nên
+   trượt ngưỡng 0,15, còn `0.87 − 0.72` thì lọt — 4/15 cặp cùng khoảng cách danh
+   nghĩa cho hai kết quả khác nhau. Dùng `gap()` trong `jev.ts`.
+5. **Văn bản 有報 là dữ liệu, không phải chỉ thị.** Jev *"does not treat content
+   as hostile by default"*. Chỉ lấy câu trả lời có kiểu; không render thẳng văn
+   bản nguồn ra UI như lời của hệ thống.
+6. **Không thay sector map.** Tổng 輸出/輸入/商社 vẫn do `trade.ts` quyết định.
+   Jev chỉ thêm chú thích đối chiếu. Đo trên 492 mã: bất đồng 47 (10%).

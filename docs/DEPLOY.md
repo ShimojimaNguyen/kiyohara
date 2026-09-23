@@ -35,6 +35,19 @@ về tuần mới không". Nghỉ lễ, sàn đóng bất thường, nguồn ch�
 
 Chạy tay: tab Actions → `weekly-scan` → Run workflow.
 
+### Sinh lại phán đoán ngoại tệ (hàng tháng, cùng nhịp universe)
+
+```bash
+npm run fx-roles          # ~45s, ~$0.015. Cần TYPESAFE_API_KEY
+```
+
+`EDINET_API_KEY` thiếu thì script **vẫn chạy** nhưng hạ xuống bằng chứng
+`name_only` và nói ra trong log. Đã đo: `name_only` yếu ở đúng ca quan trọng
+(東京瓦斯 0,44 thay vì 0,92), nên đừng coi kết quả đó là bản cuối.
+
+Chỉ mục 有報 (`data/edinet-index.json`) được commit, nên lần chạy sau chỉ quét
+những ngày chưa có thay vì quét lại cả năm.
+
 ### Sinh lại universe (hàng tháng)
 
 ```bash

@@ -22,7 +22,10 @@ Yahoo chart ──(scripts/scan.ts, hàng tuần, ~5 phút)──> data/flow-lat
                                                                       │ commit
                                                                       ▼
                                               store.ts ──> server.ts getTrade ──> route /trade
-Yahoo USDJPY ──(trade.ts fetchUsdJpyWeekly, cache 6h)─────────────────┘
+Yahoo USDJPY ──(trade.ts fetchUsdJpyWeekly, cache 6h)─────────────────┤
+                                                                      │
+EDINET 有報 ──(build_fx_roles.py + Jev, hàng tháng)──> fx-roles.ts ────┘
+                                                        492 mã, commit
 ```
 
 Ba tầng nối bằng **hình dạng dữ liệu**, không bằng lời hứa:
@@ -53,6 +56,10 @@ Mỗi cái dưới đây đều có test. Phá là đỏ.
 | `flat`/`unknown` **không** tính là `tradeIn` | Không biết tỷ giá thì không được nói "tiền vào hai phía" | `tradeBucket` |
 | Mã `neutral` bị loại và **đếm** (`skipped`) | Không bịa vai trò 輸出/輸入 cho ngân hàng, BĐS | `buildTradeView` |
 | Mọi tổng kèm `contributors` / `coverage` | Tổng 300/492 và 492/492 nhìn không phân biệt được | `RoleRow`, `TradeView.coverage` |
+| Jev `unclear` **không** tính là bất đồng | Không kết luận được thì im lặng, không được mượn sự im lặng để phản đối phân loại đang có | `disagrees` |
+| So ngưỡng Jev phải làm tròn trước | `0.82−0.67` = `0.1499…` trượt 0,15 còn `0.87−0.72` thì lọt — 4/15 cặp cùng khoảng cách cho hai kết quả | `gap()` trong `jev.ts` |
+| `none_of_these` bắt buộc ở mọi câu `choice` | Thiếu nó thì model chọn cái gần nhất và tự tin: セブン&アイ nhận `domestic_wholesale` conf 0,97 | `jev-questions.json` |
+| Phán đoán Jev không vào bất kỳ tổng yen nào | Model *"is not a calculator"*; tổng vẫn do sector map quyết | `fx-roles.ts` chỉ chú thích |
 
 ---
 
@@ -72,6 +79,10 @@ Mỗi cái dưới đây đều có test. Phá là đỏ.
 `--limit N` là chế độ thử và ghi ra `data/flow-sample.json`, **không** đụng
 `flow-latest.json`: quét 20 mã vẫn cho độ phủ 20/20 = 100%, nên nó lọt mọi cổng
 và sẽ thay một bảng 492 mã bằng một bảng 20 mã mà vẫn tự ghi là "100%".
+
+`build_fx_roles.py` cũng vậy: `--limit N` ghi `data/fx-roles.sample.json`, và
+từ chối ghi khi phủ bằng chứng EDINET < 60% hoặc < 400 mã. Một bảng nửa dựa
+有報 nửa dựa mỗi cái tên thì hai loại trông giống hệt nhau trên UI.
 
 ### Đường đối chiếu bên ngoài
 

@@ -11,6 +11,7 @@ dist/
 
 # Chế độ thử của scanner (`--limit N`) — không phải dữ liệu công bố.
 data/flow-sample.json
+data/fx-roles.sample.json
 
 # Dữ liệu nguồn tải về khi sinh universe; universe.ts mới là thứ được commit.
 scripts/_jpx/

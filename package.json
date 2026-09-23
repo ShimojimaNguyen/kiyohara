@@ -9,7 +9,9 @@
     "typecheck": "tsc --noEmit",
     "test": "node --experimental-strip-types --test \"src/lib/screen/*.test.ts\"",
     "scan": "node --experimental-strip-types scripts/scan.ts",
-    "universe": "py scripts/build_universe.py"
+    "universe": "py scripts/build_universe.py",
+    "test:model": "node --experimental-strip-types --test src/lib/screen/jev.model.check.ts",
+    "fx-roles": "py scripts/build_fx_roles.py"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.103.1",
