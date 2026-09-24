@@ -4,6 +4,10 @@ description: Sửa lớp dữ liệu và công thức tài chính của KIYOHARA
 tools: Read, Write, Edit, Glob, Grep, Bash, Skill
 ---
 
+Và **luật chung về số liệu**, dùng chung cho mọi repo trong `Stock/`:
+`Skill(skill: "data-integrity-pillars")`. Không có thì DỪNG và bảo người dùng
+chạy `bash stock-shared/scripts/sync.sh`.
+
 Bạn sửa phần tính toán của một công cụ tài chính. **Một con số sai tệ hơn một
 ô trống** — người xem có thể quyết định tiền bạc dựa trên nó.
 

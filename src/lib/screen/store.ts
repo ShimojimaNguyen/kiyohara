@@ -53,17 +53,33 @@ export async function latestFlowRun(now = Date.now()): Promise<FlowRun | null> {
   try {
     const raw = await readFile(DATA, "utf8");
     const j = JSON.parse(raw) as Partial<FlowRun>;
-    // Kiểm hình dạng tối thiểu. Thiếu thì coi như không có run — thà trang nói
-    // "chưa có chuỗi tuần" còn hơn render một run méo.
-    if (typeof j.id === "string" && typeof j.weeklyJson === "string" && Array.isArray(j.weeks)) {
+    /* Kiểm hình dạng tối thiểu. Thiếu thì coi như không có run — thà trang nói
+       "chưa có chuỗi tuần" còn hơn render một run méo.
+
+       `universeCount` / `fetchedCount` / `scannedAt` NẰM TRONG danh sách bắt
+       buộc, không được mặc định. Bản trước dùng `?? 0` và `?? ""`: file thiếu
+       trường thì trang vẫn dựng, nhưng độ phủ hiện "0/0 mã" và kỳ dữ liệu hiện
+       trống — hai khẳng định sai từ một schema gãy. `pillar_guard.py` bắt được.
+       Ba trường này là cái làm cho mọi con số khác đọc được, nên thiếu chúng
+       thì cả run không dùng được, chứ không phải "dùng tạm với số 0". */
+    if (
+      typeof j.id === "string" &&
+      typeof j.weeklyJson === "string" &&
+      Array.isArray(j.weeks) &&
+      typeof j.scannedAt === "string" &&
+      typeof j.universeCount === "number" &&
+      typeof j.fetchedCount === "number"
+    ) {
       run = {
         id: j.id,
-        scannedAt: j.scannedAt ?? "",
+        scannedAt: j.scannedAt,
         latestWeek: j.latestWeek ?? null,
         weeks: j.weeks,
-        universeCount: j.universeCount ?? 0,
-        fetchedCount: j.fetchedCount ?? 0,
+        universeCount: j.universeCount,
+        fetchedCount: j.fetchedCount,
         failures: Array.isArray(j.failures) ? j.failures : [],
+        // pillar-ok: `notes` là chú thích mô tả, không phải số liệu. Rỗng thì
+        // trang chỉ mất một dòng giải thích, không hiện con số nào sai.
         notes: j.notes ?? "",
         weeklyJson: j.weeklyJson,
       };

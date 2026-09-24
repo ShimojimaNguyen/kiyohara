@@ -5,6 +5,12 @@ description: Kiến trúc và cơ chế của KIYOHARA — luồng dữ liệu, 
 
 # KIYOHARA — kiến trúc và bất biến
 
+> **Đọc `data-integrity-pillars` trước file này.** Đó là luật chung cho mọi repo
+> thị trường trong `Stock/` — `—` chứ không `0`, kỳ dữ liệu + nguồn, nhãn tin
+> cậy, chống look-ahead, ghi idempotent. File bạn đang đọc chỉ nói **cơ chế thực
+> thi những luật đó trên stack này**. Skill chung nằm ở repo `stock-shared`;
+> thiếu thì chạy `bash stock-shared/scripts/sync.sh`.
+
 `CLAUDE.md` nói **luật**. File này nói **cơ chế**: hệ thống nối với nhau bằng
 cách nào, chỗ nào đã gãy, và cái gì đang giữ cho nó không gãy lại.
 
@@ -146,12 +152,10 @@ một phép dò trả về rỗng, cho nó dò một thứ đã biết chắc l�
 
 ## 6. Trước khi gõ dòng code đầu tiên
 
-1. Số này lấy từ đâu, ai sinh ra nó, kỳ nào?
-2. Trường nào có thể thiếu, thiếu thì hiện gì? (phải là `—`)
-3. Có phép cộng nào không? Nếu có: cộng đúng cùng một kỳ chưa, và có công bố
-   số phần tử đóng góp chưa?
-4. Có đổi công thức tài chính / hình dạng `weeklyJson` / >3 file không?
-   → Plan mode, chờ duyệt.
+Bốn câu chung nằm ở `data-integrity-pillars` § "Trước khi gõ dòng code đầu tiên".
+
+Riêng repo này thêm một câu: **có đụng tới Jev không?** Có → đọc
+`Skill(skill: "jev-judgments")` và CLAUDE.md §7 trước.
 
 ---
 

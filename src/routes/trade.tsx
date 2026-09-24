@@ -66,7 +66,10 @@ function TradeBody({ view, run, snapshot, tab, setTab }: {
           hint={view.fxLatest ? `${formatPct(view.fxLatest.pct, 2)} · ${yenLabel(view.fit)}` : "取得不可"}
           tone={fxTone(view.fit)}
         />
+        {/* pillar-ok: `count` là SỐ MÃ đóng góp. Không có hàng 輸出 nghĩa là
+            thật sự 0 mã được xếp vai trò đó — đây là 0 thật, không phải null. */}
         <Kpi label="輸出 今週" value={formatYenFlow(ex?.latestYen ?? null)} hint={`${ex?.count ?? 0} mã`} />
+        {/* pillar-ok: như trên — số mã, 0 là 0 thật. */}
         <Kpi label="輸入 今週" value={formatYenFlow(im?.latestYen ?? null)} hint={`${im?.count ?? 0} mã`} />
         <Kpi
           label="両面で入った"

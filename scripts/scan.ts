@@ -119,6 +119,7 @@ async function fetchBars(code: string): Promise<{ bars: WeeklyBar[] } | { error:
  */
 function canonicalWeeks(allDates: string[][], keep: number): string[] {
   const votes = new Map<string, number>();
+  // pillar-ok: khởi tạo bộ đếm. Ngày chưa thấy lần nào thì đếm = 0 là đúng nghĩa.
   for (const ds of allDates) for (const d of ds) votes.set(d, (votes.get(d) ?? 0) + 1);
   const ranked = [...votes.entries()].sort((a, b) => (b[1] - a[1]) || (a[0] < b[0] ? -1 : 1));
   if (ranked.length === 0) return [];
@@ -189,8 +190,13 @@ async function main(): Promise<number> {
      không dấu. Kèm 5 mã lớn nhất vào output để đối chiếu bằng mắt với bảng
      売買代金上位 công khai — một dòng số trong file kiểm được, hơn một lời hứa. */
   const lastCol = (p: (WeeklyPoint | null)[]) => p[p.length - 1];
+  // pillar-ok: đây là tổng GỘP để đối chiếu bậc độ lớn, và số mã đóng góp đã
+  // được công bố riêng qua `fetchedCount`/`failures`. Mã không có bar tuần cuối
+  // đóng góp 0 vào tổng gộp là đúng nghĩa — khác với dòng ròng CÓ DẤU, nơi
+  // null phải lan ra null (xem `sumOrNull` trong flow.ts).
   const grossTurnoverYen = Object.values(byCode)
     .reduce((s, p) => s + (lastCol(p)?.turnoverYen ?? 0), 0);
+  // pillar-ok: như trên — xếp hạng theo turnover gộp, mã thiếu bar đứng cuối.
   const topTurnover = Object.entries(byCode)
     .map(([code, p]) => ({ code, turnoverYen: lastCol(p)?.turnoverYen ?? 0 }))
     .sort((a, b) => b.turnoverYen - a.turnoverYen)

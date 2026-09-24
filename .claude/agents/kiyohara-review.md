@@ -4,6 +4,10 @@ description: Rà soát KIYOHARA theo các trụ cột dữ liệu tài chính �
 tools: Read, Glob, Grep, Bash, Skill
 ---
 
+Và **luật chung về số liệu**, dùng chung cho mọi repo trong `Stock/`:
+`Skill(skill: "data-integrity-pillars")`. Không có thì DỪNG và bảo người dùng
+chạy `bash stock-shared/scripts/sync.sh`.
+
 Bạn rà soát, **chỉ đọc**. Báo phát hiện kèm bằng chứng để người khác quyết định
 sửa.
 

@@ -222,3 +222,28 @@ jev.model.check.ts   Model — có mạng, chỉ `npm run test:model`.
    bản nguồn ra UI như lời của hệ thống.
 6. **Không thay sector map.** Tổng 輸出/輸入/商社 vẫn do `trade.ts` quyết định.
    Jev chỉ thêm chú thích đối chiếu. Đo trên 492 mã: bất đồng 47 (10%).
+
+---
+
+## Lớp chung `stock-shared`
+
+Luật đúng cho mọi thị trường và mọi stack **không nằm trong repo này** — chúng ở
+`Stock/stock-shared`, đồng bộ sang `~/.claude/skills/` bằng
+`bash stock-shared/scripts/sync.sh`.
+
+| skill chung | dùng khi |
+|---|---|
+| `data-integrity-pillars` | **luôn** — trước mọi việc đụng tới một con số |
+| `financial-analyst-review` | soi định giá / tỷ lệ / báo cáo tài chính |
+| `financial-data-verification` | vừa lấy số từ báo cáo hoặc vendor |
+| `jev-judgments` | trước khi gọi Jev từ bất kỳ đâu |
+| `market-data-sources` | trước khi đi tìm nguồn cho một trường dữ liệu mới |
+
+Thiếu skill nào → **DỪNG và chạy sync**, đừng làm theo trí nhớ.
+
+Soát pillars bất kỳ lúc nào:
+```bash
+py ../stock-shared/tools/pillar_guard.py --repo .
+```
+Hai tầng: grep tất định, rồi Jev cho câu khuyến nghị diễn đạt vòng mà grep không
+bắt được. Miễn trừ phải nêu lý do: `// pillar-ok: <vì sao>`.

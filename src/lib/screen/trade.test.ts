@@ -150,6 +150,28 @@ test("buildReasons nói rõ khi không lấy được FX", () => {
   assert.doesNotMatch(all, /円安|円高/, "không có FX thì không được nói 円安/円高");
 });
 
+test("buildReasons: dòng ròng null KHÔNG được thành 「横ばい」", () => {
+  // Lỗi thật, `pillar_guard.py` bắt được 2026-09-24. `(flowYen ?? 0)` biến
+  // "không biết" thành 0, rồi rơi vào nhánh cuối và khẳng định 横ばい — trong
+  // khi con số ngay cạnh đã hiện `—`. Hai thứ nói ngược nhau trên cùng một dòng.
+  // Chỉ soi dòng 市場資金. Dòng FX có 「為替が横ばい」 hợp lệ khi không lấy được
+  // tỷ giá — đó là chuyện khác, và bản test đầu của tôi bắt nhầm chính nó.
+  const marketLine = (flowYen: number | null, returnPct: number | null) =>
+    buildReasons({
+      role: "export", sector: "電気機器", fx: null, fit: "unknown",
+      flowYen, returnPct,
+    }).find((l) => l.includes("市場資金")) ?? "";
+
+  const unknown = marketLine(null, null);
+  assert.doesNotMatch(unknown, /横ばい/, "flowYen null mà vẫn nói 横ばい");
+  assert.doesNotMatch(unknown, /株へ流入|株から流出/);
+
+  // 0 THẬT thì vẫn phải nói 横ばい — `—` dành cho không biết, không dành cho 0.
+  assert.match(marketLine(0, 0), /横ばい/, "flowYen = 0 thật thì 横ばい là đúng");
+  assert.match(marketLine(1e8, 1.2), /株へ流入/);
+  assert.match(marketLine(-1e8, -1.2), /株から流出/);
+});
+
 // ---------------------------------------------------------------- view
 
 function pack(stocks: Array<{ code: string; nameJp: string; sector: string; flow: number }>): WeeklyPack {

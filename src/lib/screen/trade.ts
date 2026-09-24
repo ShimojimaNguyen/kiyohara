@@ -277,10 +277,20 @@ export function buildReasons(inp: ReasonInput): string[] {
     out.push("貿易キャッシュ: 為替が横ばい／取得不可のため判定しない。");
   }
 
-  const inOut = (inp.flowYen ?? 0) > 0 ? "株へ流入" : (inp.flowYen ?? 0) < 0 ? "株から流出" : "横ばい";
+  /* `flowYen == null` nghĩa là KHÔNG BIẾT, không phải "đi ngang".
+     Bản trước viết `(inp.flowYen ?? 0) > 0 ? … : … : "横ばい"`, nên mã thiếu dữ
+     liệu bị gán 横ばい — một khẳng định về thị trường dựng từ chỗ trống. Số thì
+     đã hiện `—` đúng, nhưng dòng chữ trong ngoặc lại nói ngược lại.
+     `pillar_guard.py` bắt được chỗ này. */
+  const inOut =
+    inp.flowYen == null ? null
+      : inp.flowYen > 0 ? "株へ流入"
+      : inp.flowYen < 0 ? "株から流出"
+      : "横ばい";
   out.push(
     `市場資金: 今週 Yahoo 出来高×値動きの符号 = ${formatYenFlow(inp.flowYen)}、` +
-      `週次リターン ${formatPct(inp.returnPct)}（${inOut}）。投資部門別ではない。`,
+      `週次リターン ${formatPct(inp.returnPct)}${inOut ? `（${inOut}）` : ""}。` +
+      "投資部門別ではない。",
   );
 
   return out;
@@ -389,6 +399,8 @@ export function buildTradeView(args: { weekly: WeeklyPack | null; fx: FxPack | n
     });
   }
 
+  // pillar-ok: chỉ dùng để SẮP XẾP, không hiển thị. Mã chưa có số xếp lẫn với
+  // mã đứng yên — chấp nhận được vì cột số của chúng vẫn render `—`.
   names.sort((a, b) => (b.flowYen ?? 0) - (a.flowYen ?? 0));
 
   const rows: RoleRow[] = ROLES.map((role) => {
