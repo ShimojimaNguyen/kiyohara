@@ -38,6 +38,18 @@ OUT = os.path.join(ROOT, "src", "lib", "screen", "universe.ts")
 sys.path.insert(0, os.path.join(ROOT, "scripts"))
 from xlsx_reader import read_any  # noqa: E402
 
+# Console Windows ở máy dev là cp932, còn log của script này có tiếng Việt/
+# tiếng Nhật. Không ép UTF-8 thì `print` ném UnicodeEncodeError và SCRIPT CHẾT
+# GIỮA CHỪNG — ở đúng dòng log, không phải ở chỗ lấy dữ liệu.
+#
+# CI chạy Linux/UTF-8 nên chuyện này không bao giờ xảy ra ở đó. Nghĩa là nó chỉ
+# cắn khi phải chạy tay tại máy — tức đúng lúc CI đang hỏng và cần chạy tay.
+for _s in (sys.stdout, sys.stderr):
+    try:
+        _s.reconfigure(encoding="utf-8", errors="replace")
+    except Exception:  # noqa: BLE001
+        pass
+
 INDEX = "https://www.jpx.co.jp/markets/statistics-equities/misc/01.html"
 BASE = "https://www.jpx.co.jp"
 UA = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "

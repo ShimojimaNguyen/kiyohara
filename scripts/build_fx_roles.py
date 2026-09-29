@@ -51,6 +51,18 @@ import zipfile
 from concurrent.futures import ThreadPoolExecutor
 from datetime import date, timedelta
 
+# Console Windows ở máy dev là cp932, còn log của script này có tiếng Việt/
+# tiếng Nhật. Không ép UTF-8 thì `print` ném UnicodeEncodeError và SCRIPT CHẾT
+# GIỮA CHỪNG — ở đúng dòng log, không phải ở chỗ lấy dữ liệu.
+#
+# CI chạy Linux/UTF-8 nên chuyện này không bao giờ xảy ra ở đó. Nghĩa là nó chỉ
+# cắn khi phải chạy tay tại máy — tức đúng lúc CI đang hỏng và cần chạy tay.
+for _s in (sys.stdout, sys.stderr):
+    try:
+        _s.reconfigure(encoding="utf-8", errors="replace")
+    except Exception:  # noqa: BLE001
+        pass
+
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SCREEN = os.path.join(ROOT, "src", "lib", "screen")
 OUT = os.path.join(SCREEN, "fx-roles.ts")
