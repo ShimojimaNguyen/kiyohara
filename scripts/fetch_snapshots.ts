@@ -171,7 +171,10 @@ async function main(): Promise<number> {
     } else {
       snaps.push(got.snap);
       const g = identityGap(got.snap);
-      if ((g.per ?? 0) > IDENTITY_TOL_PCT || (g.pbr ?? 0) > IDENTITY_TOL_PCT) {
+      // Tường minh: `undefined` là KHÔNG TÍNH ĐƯỢC đẳng thức (thiếu eps/bps),
+      // khác hẳn "tính được và bằng 0". `?? 0` gộp hai thứ đó làm một.
+      const over = (v: number | undefined) => v !== undefined && v > IDENTITY_TOL_PCT;
+      if (over(g.per) || over(g.pbr)) {
         inconsistent.push({ code: got.snap.code, ...g });
       }
     }

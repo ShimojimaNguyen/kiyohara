@@ -109,6 +109,8 @@ export const getAgent = createServerFn({ method: "GET" }).handler(
     const byReason = new Map<string, number>();
     for (const c of checks) {
       if (c.state === "unverifiable" && c.why) {
+        // pillar-ok: khởi tạo bộ đếm. Lý do chưa gặp lần nào thì đếm = 0 là
+        // đúng nghĩa, không phải "không biết".
         byReason.set(c.why, (byReason.get(c.why) ?? 0) + 1);
       }
     }

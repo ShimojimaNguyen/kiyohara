@@ -137,6 +137,10 @@ export function checkRunTotals(run: {
     gross = 0;
     for (const c of codes) {
       const last = byCode[c][byCode[c].length - 1];
+      // pillar-ok: cột cuối rỗng nghĩa là mã đó không giao dịch tuần ấy, và
+      // nó đóng góp 0 vào tổng GỘP — đúng theo định nghĩa mà scan.ts dùng khi
+      // tính `grossTurnoverYen`. Phải dùng CÙNG quy ước thì phép so mới có
+      // nghĩa; đổi thành null ở đây sẽ làm tổng luôn "không kiểm được".
       gross += Math.abs(last?.turnoverYen ?? 0);
     }
   }
