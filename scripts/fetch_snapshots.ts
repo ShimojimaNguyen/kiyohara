@@ -1,24 +1,45 @@
-/* Snapshot từng mã (giá · PER · PBR · EPS · BPS) → data/snapshots-latest.json
+/* Snapshot từng mã (giá · PER · PBR · EPS · BPS) → data/snapshots-{nguồn}-latest.json
  *
- * Chạy:  npm run snapshots
- *        node --experimental-strip-types scripts/fetch_snapshots.ts --limit 20
+ * Chạy:  npm run snapshots                       (Kabutan, cả universe, ~25 phút)
+ *        npm run snapshots -- --source yahoo --limit 12   (Yahoo, chỉ tra lẻ)
+ *
+ * HAI NGUỒN, VÀ LÝ DO PHẢI CÓ HAI
+ * -------------------------------
+ * Yahoo JP đủ năm trường nhưng CHẶN sau ~85 mã, chặn kéo dài, nên không phủ
+ * nổi universe. Kabutan thiếu BPS nhưng cho quét cả universe ở nhịp nó tự
+ * khai. Không nguồn nào vừa đủ trường vừa đủ độ phủ — nên giữ cả hai và nói
+ * rõ mỗi bản lấy từ đâu, thay vì trộn hai nguồn vào một bảng.
  *
  * VÌ SAO NGUỒN NÀY
  * ----------------
  * Đo ngày 2026-09-29, bốn nguồn:
  *   · Yahoo US  v7/finance/quote        → 401
  *   · Yahoo US  v10/quoteSummary/*      → 401 (cả 4 module)
- *   · Kabutan   /stock/?code=           → 200 nhưng KHÔNG có EPS/BPS,
- *                                          và robots khai `Crawl-delay: 3`
- *                                          → 492 mã = ~25 phút
+ *   · Kabutan   /stock/?code=           → 200 nhưng KHÔNG có EPS/BPS
  *   · Yahoo JP  /quote/{code}.T         → 200, có ĐỦ giá/PER/PBR/EPS/BPS
+ *
+ * Đo tiếp 2026-09-29 sau khi Yahoo chặn — trang KHÁC của Kabutan:
+ *   · Kabutan   /stock/finance?code=    → 200, có giá/PER/PBR/EPS + NIÊN ĐỘ,
+ *                                          vẫn KHÔNG có BPS.
+ *     robots.txt (đọc thật): chỉ Disallow `/94446337/` và `/search*`,
+ *     `Crawl-delay: 3`. 27,5KB/mã → 492 mã ≈ 13,5MB, ≈ 25 phút.
+ *     18 mã liên tiếp ở nhịp 3s: 18/18 HTTP 200, KHÔNG bị chặn.
+ *
+ * ĐỐI CHIẾU CHÉO hai nguồn trên 12 mã trùng (2026-09-29):
+ *   giá   12/12 khớp tới từng yên (0,00%)
+ *   PBR   lệch ≤ 1,19%
+ *   PER   lệch ≤ 1,75%   ·  EPS lệch ≤ 1,52%
+ * Và `lệch PER ≈ lệch EPS` ở TỪNG dòng — nghĩa là lệch có hệ thống do cơ sở
+ * số cổ phiếu khác nhau (Kabutan dùng 修正1株益 đã điều chỉnh chia tách), KHÔNG
+ * phải nhiễu. Ngoại lệ đã thấy: 7203 lệch 3,6% (275,1 vs 265,55) — lớn nhất
+ * trong các mã đã đo, chưa rõ vì sao, ghi lại chứ không tự giải thích.
  *
  * robots.txt của finance.yahoo.co.jp cho phép `/quote/` (chỉ chặn /portfolio,
  * /my, /cm/*, ảnh tin) và KHÔNG khai crawl-delay.
  *
- * Chi phí đo thật: 62,6KB truyền/mã (gzip; 490KB sau giải nén — đừng nhầm hai
- * con số này, tôi đã nhầm một lần và suýt loại nguồn vì tưởng nặng 250MB).
- * 492 mã ≈ 30MB, ≈ 4,4 phút.
+ * Chi phí đo thật (Yahoo): 62,6KB truyền/mã (gzip; 490KB sau giải nén — đừng
+ * nhầm hai con số này, tôi đã nhầm một lần và suýt loại nguồn vì tưởng nặng
+ * 250MB).
  *
  * BẪY ĐÃ ĐO: trường bị khoá sau tường phí trả về `"value":"000.00"` kèm
  * `"isLock":true`. Đó KHÔNG phải số 0 — đọc nhầm thì PER 0 lọt vào bảng và
@@ -33,131 +54,127 @@
  *    đường tính thứ hai mà `SD §8` đòi, làm ngay tại nguồn.
  * 4. Độ phủ < MIN_COVERAGE_PCT → KHÔNG ghi đè file cũ.
  * 5. `--limit N` ghi ra file sample, không đụng artifact production.
+ * 6. Nguồn Kabutan KHÔNG có BPS. Trường đó là `null` — nên đẳng thức PBR ở
+ *    `integrity.ts` ra "không kiểm được", đúng như nó phải thế. Tuyệt đối
+ *    KHÔNG suy BPS = giá/PBR: đó là số vòng lại từ chính PBR, nên phép kiểm
+ *    sẽ luôn xanh và luôn vô nghĩa.
  */
 
 import { writeFile, mkdir, readFile } from "node:fs/promises";
 import path from "node:path";
 
 import { FLOW_UNIVERSE, UNIVERSE_SNAPSHOT } from "../src/lib/screen/universe.ts";
+import {
+  type Snapshot, type SourceId, parseYahoo, parseKabutan, identityGap,
+} from "../src/lib/screen/snapshots.ts";
 
 const UA =
   "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36";
-const PAGE = (code: string) => `https://finance.yahoo.co.jp/quote/${code}.T`;
+type SourceCfg = {
+  page: (code: string) => string;
+  /** Nghỉ giữa các request, ms. */
+  pauseMs: number;
+  /** Trần cứng một lần chạy. `0` = không trần (nguồn đã đo là chịu được). */
+  maxPerRun: number;
+  label: string;
+  notes: string;
+  parse: (code: string, html: string) => { snap: Snapshot } | { error: string };
+};
 
-/** Nghỉ giữa các request.
- *
- * ⛔ ĐÃ ĐO: nguồn CHẶN sau ~85 mã dù nghỉ 150ms — 407 mã còn lại HTTP 500, và
- * chặn kéo dài: sau 60s vẫn 500, giãn 3s/request vẫn 500. Một lần quét hàng
- * loạt làm mất nguồn cho cả việc tra một mã lẻ.
- *
- * Nên script này KHÔNG dùng được cho cả universe cho tới khi biết nhịp an
- * toàn, và đừng dò nhịp đó bằng cách gọi thêm. Hiện chỉ dùng `--limit` nhỏ. */
-const PAUSE_MS = 150;
-/** Trần cứng: quá số này thì dừng, không hỏi. Bảo vệ nguồn khỏi chính script. */
-const MAX_CODES_PER_RUN = 60;
+const SOURCES: Record<SourceId, SourceCfg> = {
+  /** ⛔ CHỈ TRA LẺ. Đã đo: chặn sau ~85 mã dù nghỉ 150ms, và chặn KÉO DÀI —
+   *  sau 60s vẫn 500, giãn 3s/request vẫn 500. Một lần quét hàng loạt làm mất
+   *  nguồn cho cả việc tra một mã. Trần 60 là để script không tự huỷ nguồn;
+   *  đừng nới nó, hãy dùng `--source kabutan`. */
+  yahoo: {
+    page: (code) => `https://finance.yahoo.co.jp/quote/${code}.T`,
+    pauseMs: 150,
+    maxPerRun: 60,
+    label: "Yahoo!ファイナンス 個別銘柄ページ (finance.yahoo.co.jp/quote/{code}.T)",
+    notes:
+      "PER/EPS thường là 会社予想, PBR/BPS là 実績 — xem perBasis/epsBasis từng mã. " +
+      "Trường bị khoá sau tường phí trả về 000.00 kèm isLock và đã được đổi thành null, " +
+      "KHÔNG phải 0.",
+    parse: parseYahoo,
+  },
+  /** Nhịp 3s là con số Kabutan TỰ KHAI trong robots.txt (`Crawl-delay: 3`),
+   *  không phải tôi đoán. Không đặt trần: đã chạy 18 mã liên tiếp không bị
+   *  chặn, và đây là nguồn duy nhất phủ nổi universe. */
+  kabutan: {
+    page: (code) => `https://kabutan.jp/stock/finance?code=${code}`,
+    pauseMs: 3000,
+    maxPerRun: 0,
+    label: "株探 業績・財務推移 (kabutan.jp/stock/finance?code={code})",
+    notes:
+      "BPS KHÔNG có ở nguồn này nên là null — đẳng thức PBR vì thế 'không kiểm " +
+      "được', và đó là câu trả lời đúng. EPS là 修正1株益 của hàng 予想 (đã điều " +
+      "chỉnh chia tách); niên độ ghi ở fiscalPeriod, khác nhau giữa các mã " +
+      "(có mã 2026.08, có mã 2027.03) — đừng gộp chung kỳ.",
+    parse: parseKabutan,
+  },
+};
+
 /** Dưới mức này thì bảng thiếu quá nhiều mã để gọi là "toàn universe". */
 const MIN_COVERAGE_PCT = 80;
 /** Lệch quá mức này giữa đẳng thức và số trang công bố thì gắn cờ. */
 const IDENTITY_TOL_PCT = 3;
 
-const OUT = path.join(process.cwd(), "data", "snapshots-latest.json");
-const OUT_SAMPLE = path.join(process.cwd(), "data", "snapshots-sample.json");
+/* Mỗi nguồn một file. Hai nguồn lệch nhau ~1% ở PER/EPS một cách CÓ HỆ THỐNG
+ * (cơ sở số cổ phiếu khác nhau) — ghi đè lẫn nhau sẽ tạo một bảng nửa nguồn
+ * này nửa nguồn kia mà không ai biết, và chính đó là thứ làm số sai. */
+const OUT = (src: SourceId) =>
+  path.join(process.cwd(), "data", `snapshots-${src}-latest.json`);
+const OUT_SAMPLE = (src: SourceId) =>
+  path.join(process.cwd(), "data", `snapshots-${src}-sample.json`);
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 const log = (m: string) => console.log(`[snapshots] ${m}`);
 
-export type Snapshot = {
-  code: string;
-  price: number | null;
-  per: number | null;
-  pbr: number | null;
-  eps: number | null;
-  bps: number | null;
-  /** Nhãn kỳ của từng trường (（予想）/（実績）) — PER dự phóng khác PER thực hiện. */
-  perBasis: string | null;
-  epsBasis: string | null;
-  /** Giờ trang công bố cập nhật, dạng ISO nếu đọc được. */
-  updatedAt: string | null;
-};
 
-/**
- * Đọc một trường từ JSON nhúng trong trang.
- *
- * Trang nhúng payload với dấu nháy escape (`\"per\":{\"value\":\"10.85\"}`),
- * nên phải gỡ escape trước. Giá trị có dấu phẩy ngăn nghìn (`"3,150.60"`) —
- * bản đầu của tôi dùng `[^",]+` nên cắt ngay ở dấu phẩy và đọc `3` thay vì
- * `3150.60`. Sai đó không ném lỗi, chỉ cho ra một con số nhỏ hợp lý.
- */
-function field(unescaped: string, key: string): { value: number | null; basis: string | null } {
-  const m = new RegExp(`"${key}":\\{(.{0,300}?)\\}`, "s").exec(unescaped);
-  if (!m) return { value: null, basis: null };
-  const blob = m[1];
-  if (/"isLock":true/.test(blob)) return { value: null, basis: null };  // tường phí
-  const v = /"value":"([0-9,.\-]+)"/.exec(blob) ?? /"value":([0-9.\-]+)/.exec(blob);
-  const sub = /"subText":"([^"]*)"/.exec(blob);
-  if (!v) return { value: null, basis: sub?.[1] ?? null };
-  const n = Number(v[1].replace(/,/g, ""));
-  return { value: Number.isFinite(n) ? n : null, basis: sub?.[1] ?? null };
-}
-
-async function fetchOne(code: string): Promise<{ snap: Snapshot } | { error: string }> {
+async function fetchOne(
+  cfg: SourceCfg, code: string,
+): Promise<{ snap: Snapshot } | { error: string }> {
   try {
     const ctl = new AbortController();
     const timer = setTimeout(() => ctl.abort(), 20_000);
-    const res = await fetch(PAGE(code), { headers: { "User-Agent": UA }, signal: ctl.signal });
+    const res = await fetch(cfg.page(code), { headers: { "User-Agent": UA }, signal: ctl.signal });
     clearTimeout(timer);
     if (!res.ok) return { error: `HTTP ${res.status}` };
-    const html = await res.text();
-    const u = html.replace(/\\"/g, '"');
-
-    const price = field(u, "price");
-    const per = field(u, "per");
-    const pbr = field(u, "pbr");
-    const eps = field(u, "eps");
-    const bps = field(u, "bps");
-    if (price.value === null) return { error: "không đọc được giá" };
-
-    const at = /"updateDateMeta":"([0-9T:+\-]{19,25})"/.exec(u);
-    return {
-      snap: {
-        code,
-        price: price.value, per: per.value, pbr: pbr.value,
-        eps: eps.value, bps: bps.value,
-        perBasis: per.basis, epsBasis: eps.basis,
-        updatedAt: at?.[1] ?? null,
-      },
-    };
+    return cfg.parse(code, await res.text());
   } catch (e) {
     return { error: e instanceof Error ? e.name : "unknown" };
   }
 }
 
-/** Đẳng thức tại nguồn: giá/EPS phải ra PER, giá/BPS phải ra PBR. */
-function identityGap(s: Snapshot): { per?: number; pbr?: number } {
-  const out: { per?: number; pbr?: number } = {};
-  if (s.price != null && s.eps != null && s.eps !== 0 && s.per != null && s.per !== 0) {
-    out.per = Math.abs(s.price / s.eps - s.per) / Math.abs(s.per) * 100;
-  }
-  if (s.price != null && s.bps != null && s.bps !== 0 && s.pbr != null && s.pbr !== 0) {
-    out.pbr = Math.abs(s.price / s.bps - s.pbr) / Math.abs(s.pbr) * 100;
-  }
-  return out;
+
+function arg(name: string): string | null {
+  const i = process.argv.indexOf(name);
+  return i > -1 ? (process.argv[i + 1] ?? null) : null;
 }
 
 async function main(): Promise<number> {
-  const i = process.argv.indexOf("--limit");
-  const limit = i > -1 ? Number(process.argv[i + 1]) : 0;
+  // pillar-ok: `0` ở đây là "không đặt trần", không phải một số đo bị thiếu.
+  // Mã dưới đọc nó bằng `limit > 0`, nên 0 và "vắng mặt" là CÙNG một ý nghĩa.
+  const limit = Number(arg("--limit") ?? 0);
+  const sourceId = (arg("--source") ?? "kabutan") as SourceId;
+  const cfg = SOURCES[sourceId];
+  if (!cfg) {
+    log(`nguồn lạ: ${sourceId} — chỉ có ${Object.keys(SOURCES).join(" | ")}`);
+    return 2;
+  }
   const wanted = limit > 0 ? FLOW_UNIVERSE.slice(0, limit) : FLOW_UNIVERSE;
-  if (wanted.length > MAX_CODES_PER_RUN) {
-    log(`từ chối chạy ${wanted.length} mã — trần một lần là ${MAX_CODES_PER_RUN}.`);
-    log("Nguồn đã chặn ở lần thử 492 mã (85 OK rồi 407 lỗi HTTP 500, chặn kéo");
-    log("dài qua cả nghỉ 60s và nhịp 3s). Xem skill market-data-sources §2.2b.");
-    log("Muốn phủ cả universe: tìm nguồn khác, đừng nới trần này.");
+  if (cfg.maxPerRun && wanted.length > cfg.maxPerRun) {
+    log(`từ chối chạy ${wanted.length} mã qua nguồn ${sourceId} — trần là ${cfg.maxPerRun}.`);
+    log("Nguồn này đã chặn ở lần thử 492 mã (85 OK rồi 407 lỗi HTTP 500, chặn");
+    log("kéo dài qua cả nghỉ 60s và nhịp 3s). Xem skill market-data-sources §2.2b.");
+    log("Muốn phủ cả universe: `--source kabutan`. Đừng nới trần này.");
     return 2;
   }
   const universe = wanted;
 
-  log(`universe ${universe.length} mã (ảnh chụp JPX ${UNIVERSE_SNAPSHOT || "?"})`);
+  const mins = (universe.length * cfg.pauseMs) / 60000;
+  log(`nguồn ${sourceId} · nhịp ${cfg.pauseMs}ms · universe ${universe.length} mã ` +
+      `(ảnh chụp JPX ${UNIVERSE_SNAPSHOT || "?"}) · dự kiến ~${mins.toFixed(0)} phút`);
   const t0 = Date.now();
 
   const snaps: Snapshot[] = [];
@@ -165,7 +182,7 @@ async function main(): Promise<number> {
   const inconsistent: Array<{ code: string; per?: number; pbr?: number }> = [];
 
   for (let n = 0; n < universe.length; n++) {
-    const got = await fetchOne(universe[n].code);
+    const got = await fetchOne(cfg, universe[n].code);
     if ("error" in got) {
       failures.push({ code: universe[n].code, reason: got.error });
     } else {
@@ -181,7 +198,7 @@ async function main(): Promise<number> {
     if ((n + 1) % 50 === 0) {
       log(`${n + 1}/${universe.length} · lấy được ${snaps.length} · lỗi ${failures.length}`);
     }
-    if (n < universe.length - 1) await sleep(PAUSE_MS);
+    if (n < universe.length - 1) await sleep(cfg.pauseMs);
   }
 
   const coverage = (snaps.length / universe.length) * 100;
@@ -209,25 +226,24 @@ async function main(): Promise<number> {
     return 1;
   }
 
-  const out = limit ? OUT_SAMPLE : OUT;
+  const out = limit ? OUT_SAMPLE(sourceId) : OUT(sourceId);
   const payload = {
     fetchedAt: new Date().toISOString(),
     universeCount: universe.length,
     fetchedCount: snaps.length,
     failures,
     inconsistent,
-    source: "Yahoo!ファイナンス 個別銘柄ページ (finance.yahoo.co.jp/quote/{code}.T)",
-    notes:
-      "PER/EPS thường là 会社予想, PBR/BPS là 実績 — xem perBasis/epsBasis từng mã. " +
-      "Trường bị khoá sau tường phí trả về 000.00 kèm isLock và đã được đổi thành null, " +
-      "KHÔNG phải 0. Universe = TOPIX Core30/Large70/Mid400, không phải toàn sàn.",
+    source: cfg.label,
+    sourceId,
+    notes: cfg.notes +
+      " Universe = TOPIX Core30/Large70/Mid400, không phải toàn sàn.",
     snapshots: snaps,
   };
 
   await mkdir(path.dirname(out), { recursive: true });
   await writeFile(out, JSON.stringify(payload, null, 2) + "\n", "utf8");
   log(`ghi ${path.relative(process.cwd(), out)}` +
-      (limit ? "  (chế độ thử — KHÔNG đụng snapshots-latest.json)" : ""));
+      (limit ? "  (chế độ thử — KHÔNG đụng bản latest)" : ""));
   return 0;
 }
 

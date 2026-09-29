@@ -156,15 +156,43 @@ export function checkRunTotals(run: {
 export function checkSnapshot(s: {
   code: string; price: number | null; per: number | null; pbr: number | null;
   eps: number | null; bps: number | null;
+  /** Kỳ không dài 12 tháng (công ty đang đổi niên độ). */
+  fiscalPeriodIrregular?: boolean;
+  /** Nguồn của dòng này — quyết định câu giải thích khi thiếu trường. */
+  source?: string;
 }): Check[] {
+  // Lý do phải NÓI ĐÚNG nguồn nào thiếu gì. Trên `/agent` câu này lặp lại
+  // đúng bằng số mã (490 dòng), nên một câu sai ở đây là một lời giải thích
+  // sai lặp 490 lần — người đọc sẽ đi tìm "tường phí" ở một trang không có
+  // tường phí nào.
   const why = "trang nguồn không công bố (hoặc trường bị khoá sau tường phí)";
+  const bpsWhy = s.source === "kabutan"
+    ? "nguồn Kabutan không công bố BPS — và KHÔNG suy từ giá/PBR, vì số đó "
+      + "vòng lại từ chính PBR nên phép kiểm sẽ luôn xanh và luôn vô nghĩa"
+    : why;
+
+  // KỲ KHÔNG DÀI 12 THÁNG → "không kiểm được", KHÔNG phải "lệch".
+  //
+  // Ca thật: 2871 ニチレイ đổi niên độ tháng 3 → tháng 12, nên `2026.12` chỉ
+  // dài 9 tháng. EPS công bố là của 9 tháng (81,4) còn PER (19,9) tính trên
+  // EPS đã quy năm — `81,4 × 12/9 = 108,5`, `2159 / 108,5 = 19,9`.
+  //
+  // Đẳng thức ngây thơ ra 26,5 và lệch 33%. Gọi đó là "LỆCH" là báo động
+  // giả: không ai sai cả, chỉ là thiếu một giả định (mùa vụ) để so được. Mà
+  // báo động giả lặp lại thì cả trang bị bỏ qua — xem docstring đầu file.
+  const perWhy = s.fiscalPeriodIrregular
+    ? "kỳ không dài 12 tháng (công ty đổi niên độ) — nguồn quy năm EPS khi "
+      + "tính PER, và quy năm là một giả định về mùa vụ, không phải phép tính"
+    : why;
+  const perRecomputed = s.fiscalPeriodIrregular ? null
+    : (s.price != null && s.eps != null && s.eps !== 0 ? s.price / s.eps : null);
+
   return [
-    compare("PER = giá / EPS", s.per,
-      s.price != null && s.eps != null && s.eps !== 0 ? s.price / s.eps : null,
-      { code: s.code, tolPct: 3, why }),
+    compare("PER = giá / EPS", s.per, perRecomputed,
+      { code: s.code, tolPct: 3, why: perWhy }),
     compare("PBR = giá / BPS", s.pbr,
       s.price != null && s.bps != null && s.bps !== 0 ? s.price / s.bps : null,
-      { code: s.code, tolPct: 3, why }),
+      { code: s.code, tolPct: 3, why: bpsWhy }),
   ];
 }
 

@@ -146,6 +146,31 @@ test("checkSnapshot: trường bị khoá (null) → không kiểm được, KH�
   assert.ok(cs.every((c) => c.why));
 });
 
+test("checkSnapshot: kỳ 9 tháng → 'không kiểm được', KHÔNG phải 'lệch'", () => {
+  // 2871 ニチレイ, số thật 2026-09-29: giá 2159 · PER 19,9 · EPS 81,4 của kỳ
+  // 9 tháng. Đẳng thức ngây thơ ra 26,5, lệch 33% — nhưng không ai sai: nguồn
+  // quy năm EPS khi tính PER (81,4 × 12/9 = 108,5 → 19,9).
+  //
+  // Gọi đó là LỆCH là báo động giả, và báo động giả lặp lại thì cả trang bị
+  // bỏ qua. Đây là lằn ranh chính xác giữa "sai" và "không so được".
+  const cs = checkSnapshot({ code: "2871", price: 2159, per: 19.9, pbr: 1.88,
+                             eps: 81.4, bps: null, fiscalPeriodIrregular: true });
+  const per = cs.find((c) => c.name.startsWith("PER"))!;
+  assert.equal(per.state, "unverifiable");
+  assert.match(per.why!, /đổi niên độ/);
+  assert.equal(per.recomputed, null, "không được đưa ra con số tính lại sai kỳ");
+});
+
+test("checkSnapshot: kỳ bình thường thì vẫn kiểm đẳng thức như cũ", () => {
+  // Cổng chống sửa quá tay: đừng vì ca 2871 mà tắt phép kiểm cho mọi mã.
+  const ok = checkSnapshot({ code: "7203", price: 2881.5, per: 10.5, pbr: 0.91,
+                             eps: 275.1, bps: null, fiscalPeriodIrregular: false });
+  assert.equal(ok.find((c) => c.name.startsWith("PER"))!.state, "ok");
+  const bad = checkSnapshot({ code: "X", price: 1000, per: 50, pbr: null,
+                              eps: 100, bps: null });
+  assert.equal(bad.find((c) => c.name.startsWith("PER"))!.state, "mismatch");
+});
+
 // ---------------------------------------------------------------- kết luận
 
 test("verdict: KHÔNG nói sạch khi còn mục không kiểm được", () => {

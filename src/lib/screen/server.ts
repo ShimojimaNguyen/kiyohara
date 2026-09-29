@@ -89,11 +89,19 @@ export const getAgent = createServerFn({ method: "GET" }).handler(
       }
     }
 
-    // Snapshot định giá là tuỳ chọn: nguồn Yahoo JP chặn quét hàng loạt nên
-    // artifact production có thể chưa tồn tại. Thiếu thì bỏ qua, KHÔNG bịa.
+    // Snapshot định giá là tuỳ chọn — thiếu thì bỏ qua, KHÔNG bịa.
+    //
+    // Thứ tự: bản đầy đủ trước bản mẫu, và Kabutan trước Yahoo vì chỉ Kabutan
+    // phủ nổi cả universe (Yahoo chặn sau ~85 mã). Lấy CÁI ĐẦU TIÊN có, không
+    // gộp — hai nguồn lệch ~1% ở PER/EPS một cách có hệ thống, trộn vào một
+    // bảng là tạo ra một bảng không nguồn nào chịu trách nhiệm.
     let snapshotSource: string | null = null;
     let snapshotCount = 0;
-    for (const f of ["snapshots-latest.json", "snapshots-sample.json"]) {
+    for (const f of [
+      "snapshots-kabutan-latest.json", "snapshots-yahoo-latest.json",
+      "snapshots-kabutan-sample.json", "snapshots-yahoo-sample.json",
+      "snapshots-latest.json", "snapshots-sample.json",   // tên cũ, trước khi tách nguồn
+    ]) {
       try {
         const raw = await readFile(path.join(process.cwd(), "data", f), "utf8");
         const j = JSON.parse(raw) as { source?: string; snapshots?: unknown[] };
