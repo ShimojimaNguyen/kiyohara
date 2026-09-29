@@ -212,15 +212,29 @@ hư không. Golden test chốt ca này lại; **đỏ ở đó thì dừng dùng
 ### 7.3 Cấu trúc
 
 ```
-jev-questions.json   NGUỒN SỰ THẬT DUY NHẤT của câu hỏi — Python builder và
-                     TS test cùng đọc file này. Hai bản sẽ lệch nhau.
-jev.ts               Chính sách: ngưỡng + biến xác suất thành quyết định.
-                     Ở TRONG CODE, không ở trong model.
-build_fx_roles.py    Sinh artifact. Cổng từ chối ghi như build_universe.py.
-fx-roles.ts          Artifact commit, đọc như universe.ts.
-jev.test.ts          Chính sách — không mạng, chạy trong `npm test`.
-jev.model.check.ts   Model — có mạng, chỉ `npm run test:model`.
+src/lib/screen/jev/
+  questions.fx-roles.json   NGUỒN SỰ THẬT DUY NHẤT của bộ câu hỏi phân loại
+                            phơi nhiễm ngoại tệ. Python builder và TS test
+                            cùng đọc file này — hai bản sẽ lệch nhau.
+  policy.ts                 Chính sách: ngưỡng + biến xác suất thành quyết
+                            định. Ở TRONG CODE, không ở trong model.
+  policy.test.ts            Chính sách — không mạng, chạy trong `npm test`.
+  model.check.ts            Model — có mạng, chỉ `npm run test:model`.
+
+scripts/build_fx_roles.py   Sinh artifact. Cổng từ chối ghi như build_universe.
+src/lib/screen/fx-roles.ts  Artifact commit, đọc như universe.ts.
 ```
+
+**Vì sao là thư mục chứ không phải file phẳng.** `docs/PRODUCT.md` mô tả một bộ
+JEV thứ hai, khác hẳn: 7 câu 判定 cổ phiếu (`value_candidate`, `eps_quality`,
+`bs_quality`, `catalyst`, `risk`, `trap`, `action`) — và spec đặt nó ở đúng
+đường dẫn `src/lib/screen/jev.ts` mà repo này đang dùng cho lớp chính sách
+fx-roles. **Hai thứ khác hẳn nhau dùng chung một tên**; port thẳng sẽ ghi đè
+mất. Namespace `jev/` tách sẵn để bộ 判定 vào được mà không đụng bộ fx-roles —
+khi làm, nó là `jev/questions.screen.json` + `jev/screen.ts`.
+
+Đây đúng kiểu lỗi mà `SD §8` mô tả: hai đại lượng khác nhau mang cùng một tên,
+lệch nhau đủ ít để không ai nghi.
 
 ### 7.4 Luật riêng
 

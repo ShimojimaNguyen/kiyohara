@@ -13,7 +13,7 @@ import assert from "node:assert/strict";
 import {
   leanOf, leanOfSectorRole, disagrees, leanLabel, evidenceLabel, wholesaleLabel,
   STRONG, WEAK, MARGIN, CONF_MIN, type JevRead,
-} from "./jev.ts";
+} from "./policy.ts";
 
 const read = (p: Partial<JevRead>): JevRead => ({
   code: "0000", fxRevenue: null, fxCost: null,

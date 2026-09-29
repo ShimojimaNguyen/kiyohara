@@ -64,7 +64,7 @@ Mỗi cái dưới đây đều có test. Phá là đỏ.
 | Mọi tổng kèm `contributors` / `coverage` | Tổng 300/492 và 492/492 nhìn không phân biệt được | `RoleRow`, `TradeView.coverage` |
 | Jev `unclear` **không** tính là bất đồng | Không kết luận được thì im lặng, không được mượn sự im lặng để phản đối phân loại đang có | `disagrees` |
 | So ngưỡng Jev phải làm tròn trước | `0.82−0.67` = `0.1499…` trượt 0,15 còn `0.87−0.72` thì lọt — 4/15 cặp cùng khoảng cách cho hai kết quả | `gap()` trong `jev.ts` |
-| `none_of_these` bắt buộc ở mọi câu `choice` | Thiếu nó thì model chọn cái gần nhất và tự tin: セブン&アイ nhận `domestic_wholesale` conf 0,97 | `jev-questions.json` |
+| `none_of_these` bắt buộc ở mọi câu `choice` | Thiếu nó thì model chọn cái gần nhất và tự tin: セブン&アイ nhận `domestic_wholesale` conf 0,97 | `jev/questions.fx-roles.json` |
 | Phán đoán Jev không vào bất kỳ tổng yen nào | Model *"is not a calculator"*; tổng vẫn do sector map quyết | `fx-roles.ts` chỉ chú thích |
 
 ---

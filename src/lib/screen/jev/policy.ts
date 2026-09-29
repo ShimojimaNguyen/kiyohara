@@ -17,7 +17,7 @@
  * số 0.85 dựa trên 有報 khác hẳn một con số 0.85 dựa trên mỗi cái tên.
  */
 
-import { tradeRole, type TradeRole } from "./trade.ts";
+import { tradeRole, type TradeRole } from "../trade.ts";
 
 /** Trên mức này mới coi là "có phơi nhiễm". */
 export const STRONG = 0.7;

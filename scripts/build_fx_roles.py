@@ -55,7 +55,7 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SCREEN = os.path.join(ROOT, "src", "lib", "screen")
 OUT = os.path.join(SCREEN, "fx-roles.ts")
 OUT_SAMPLE = os.path.join(ROOT, "data", "fx-roles.sample.json")
-QUESTIONS = os.path.join(SCREEN, "jev-questions.json")
+QUESTIONS = os.path.join(SCREEN, "jev", "questions.fx-roles.json")
 UNIVERSE_TS = os.path.join(SCREEN, "universe.ts")
 # Chỉ mục 有報 được commit để lần sau chỉ tải phần mới, không quét lại cả năm.
 EDINET_INDEX = os.path.join(ROOT, "data", "edinet-index.json")
@@ -392,10 +392,10 @@ def main() -> int:
  * KHÔNG được cộng vào bất kỳ con số yen nào. Sector map trong trade.ts vẫn là
  * nguồn sự thật duy nhất cho các tổng 輸出/輸入/商社. File này chỉ để đối chiếu.
  *
- * Ngưỡng và cách diễn giải nằm ở jev.ts, không nằm đây.
+ * Ngưỡng và cách diễn giải nằm ở jev/policy.ts, không nằm đây.
  */
 
-import type {{ JevRead }} from "./jev.ts";
+import type {{ JevRead }} from "./jev/policy.ts";
 
 export const FX_ROLES: JevRead[] = [
 {body},

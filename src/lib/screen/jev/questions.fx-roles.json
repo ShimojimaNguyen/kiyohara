@@ -1,13 +1,13 @@
 {
   "_readme": [
     "NGUỒN SỰ THẬT DUY NHẤT cho các câu hỏi gửi Jev.",
-    "Đọc bởi scripts/build_fx_roles.py (sinh artifact) VÀ src/lib/screen/jev.ts",
+    "Đọc bởi scripts/build_fx_roles.py (sinh artifact) VÀ src/lib/screen/jev/policy.ts",
     "(golden test). Để hai bản thì chúng sẽ lệch nhau và không ai biết bản nào",
     "đang chạy — cùng lý lẽ với việc logic tài chính ở src/lib/screen/ được dùng",
     "chung giữa app và scanner.",
     "",
     "Đổi chữ trong đây = đổi ý nghĩa câu hỏi = phải chạy lại golden test VÀ sinh",
-    "lại fx-roles.ts. Ngưỡng nằm ở jev.ts, không nằm đây.",
+    "lại fx-roles.ts. Ngưỡng nằm ở jev/policy.ts, không nằm đây.",
     "",
     "Tiếng Anh có chủ đích: tài liệu Jev ghi độ chính xác cao nhất ở tiếng Anh,",
     "CJK thấp hơn. State thì vẫn là tiếng Nhật vì đó là dữ liệu gốc."

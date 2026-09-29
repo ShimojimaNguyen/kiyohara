@@ -6,7 +6,7 @@
  * ----------
  * Model là một phụ thuộc bên ngoài có thể đổi dưới chân mà không báo:
  * `jev-latest` trỏ sang bản mới, hoặc ai đó sửa một chữ trong
- * jev-questions.json. Cả hai đều làm đổi số mà không có dòng diff nào trong
+ * questions.fx-roles.json. Cả hai đều làm đổi số mà không có dòng diff nào trong
  * logic. File này chốt lại những ca đã ĐO THẬT ngày 2026-09-22, nên trôi là đỏ.
  *
  * Ngưỡng ở đây lỏng hơn số đo thật (biên ±0.1~0.15) vì model không hứa hẹn
@@ -21,11 +21,11 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 
-import { STRONG, CONF_MIN, leanOf, type JevLean } from "./jev.ts";
+import { STRONG, CONF_MIN, leanOf, type JevLean } from "./policy.ts";
 
 const KEY = process.env.TYPESAFE_API_KEY;
 const QDEF = JSON.parse(
-  readFileSync(new URL("./jev-questions.json", import.meta.url), "utf8"),
+  readFileSync(new URL("./questions.fx-roles.json", import.meta.url), "utf8"),
 ) as {
   model: string;
   questions: Record<string, unknown>;

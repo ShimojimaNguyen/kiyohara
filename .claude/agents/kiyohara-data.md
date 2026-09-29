@@ -48,11 +48,11 @@ mâu thuẫn thì CLAUDE.md thắng. Không được bỏ qua rồi "code theo c
    `scripts/xlsx_reader.py` đọc cả .xls lẫn .xlsx bằng stdlib.
 9. Thêm/đổi hành vi thì **thêm test**. Test không gọi mạng.
 10. Cấm sinh chuỗi khuyến nghị mua/bán, cấm 買い推奨 / だろう.
-11. **Đụng tới Jev** (`jev.ts`, `jev-questions.json`, `build_fx_roles.py`) thì đọc
+11. **Đụng tới Jev** (`jev/policy.ts`, `jev/questions.fx-roles.json`, `build_fx_roles.py`) thì đọc
     CLAUDE.md §7 trước. Ba điều hay quên nhất:
     - Jev **không chạm số** — nó không phải máy tính, và đã đo là yếu ở đếm/so
       số/đọc ngày. Mọi phép cộng yen ở lại trong TS.
-    - Câu hỏi nằm ở `jev-questions.json`, **một bản duy nhất** cho cả Python lẫn
+    - Câu hỏi nằm ở `jev/questions.fx-roles.json`, **một bản duy nhất** cho cả Python lẫn
       TS. Đừng chép sang chỗ thứ hai.
     - Mọi câu `choice` phải có `none_of_these`; mọi so ngưỡng phải qua `gap()`.
     Đổi chữ trong câu hỏi = đổi ý nghĩa → chạy lại `npm run test:model` VÀ sinh
