@@ -72,6 +72,23 @@ xem có thể ra quyết định tiền bạc dựa trên số bạn hiển th�
 
 ---
 
+## 1.6 Spec sản phẩm vs luật kỹ thuật
+
+`docs/PRODUCT.md` là **spec sản phẩm** (13 route, thứ tự bấm, JEV 判定, 月例,
+ADR, wiki). File bạn đang đọc là **luật kỹ thuật**. Khi mâu thuẫn:
+
+    CLAUDE.md  >  skill data-integrity-pillars (SD)  >  docs/PRODUCT.md
+
+Spec nói *muốn gì*; hai cái trước nói *không được làm gì*. Ví dụ có thật: spec
+chấp nhận "restart server = mất scan" (PGLite in-process) — `SD §10` không chấp
+nhận, nên repo này dùng artifact commit vào git.
+
+**Spec mô tả ĐÍCH, không mô tả repo hiện tại**: 4/13 route đã có. Đầu
+`docs/PRODUCT.md` liệt kê đủ cái gì có, cái gì chưa, và ba chỗ va nhau. Đọc
+khối đó trước khi trả lời người dùng về bất kỳ trang nào.
+
+---
+
 ## 2. Stack
 
 | Tầng | Công nghệ |
