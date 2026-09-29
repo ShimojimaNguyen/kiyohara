@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AgentRouteImport } from './routes/agent'
 import { Route as FlowRouteImport } from './routes/flow'
 import { Route as RotationRouteImport } from './routes/rotation'
 import { Route as TradeRouteImport } from './routes/trade'
@@ -17,6 +18,11 @@ import { Route as TradeRouteImport } from './routes/trade'
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AgentRoute = AgentRouteImport.update({
+  id: '/agent',
+  path: '/agent',
   getParentRoute: () => rootRouteImport,
 } as any)
 const FlowRoute = FlowRouteImport.update({
@@ -37,12 +43,14 @@ const TradeRoute = TradeRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/agent': typeof AgentRoute
   '/flow': typeof FlowRoute
   '/rotation': typeof RotationRoute
   '/trade': typeof TradeRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/agent': typeof AgentRoute
   '/flow': typeof FlowRoute
   '/rotation': typeof RotationRoute
   '/trade': typeof TradeRoute
@@ -50,20 +58,22 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/agent': typeof AgentRoute
   '/flow': typeof FlowRoute
   '/rotation': typeof RotationRoute
   '/trade': typeof TradeRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/flow' | '/rotation' | '/trade'
+  fullPaths: '/' | '/agent' | '/flow' | '/rotation' | '/trade'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/flow' | '/rotation' | '/trade'
-  id: '__root__' | '/' | '/flow' | '/rotation' | '/trade'
+  to: '/' | '/agent' | '/flow' | '/rotation' | '/trade'
+  id: '__root__' | '/' | '/agent' | '/flow' | '/rotation' | '/trade'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AgentRoute: typeof AgentRoute
   FlowRoute: typeof FlowRoute
   RotationRoute: typeof RotationRoute
   TradeRoute: typeof TradeRoute
@@ -76,6 +86,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/agent': {
+      id: '/agent'
+      path: '/agent'
+      fullPath: '/agent'
+      preLoaderRoute: typeof AgentRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/flow': {
@@ -104,6 +121,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AgentRoute: AgentRoute,
   FlowRoute: FlowRoute,
   RotationRoute: RotationRoute,
   TradeRoute: TradeRoute,

@@ -11,6 +11,7 @@ const NAV = [
   { to: "/trade", label: "輸出入" },
   { to: "/flow", label: "Dòng tiền" },
   { to: "/rotation", label: "Từng tuần" },
+  { to: "/agent", label: "Kiểm số" },
 ] as const;
 
 export function AppShell({ children }: { children: ReactNode }) {
