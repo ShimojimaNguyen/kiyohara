@@ -11,7 +11,8 @@
     "scan": "node --experimental-strip-types scripts/scan.ts",
     "universe": "py scripts/build_universe.py",
     "test:model": "node --experimental-strip-types --test src/lib/screen/jev/model.check.ts",
-    "fx-roles": "py scripts/build_fx_roles.py"
+    "fx-roles": "py scripts/build_fx_roles.py",
+    "snapshots": "node --experimental-strip-types scripts/fetch_snapshots.ts"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.103.1",

@@ -1,0 +1,143 @@
+{
+  "fetchedAt": "2026-09-29T07:07:44.457Z",
+  "universeCount": 12,
+  "fetchedCount": 12,
+  "failures": [],
+  "inconsistent": [],
+  "source": "Yahoo!ファイナンス 個別銘柄ページ (finance.yahoo.co.jp/quote/{code}.T)",
+  "notes": "PER/EPS thường là 会社予想, PBR/BPS là 実績 — xem perBasis/epsBasis từng mã. Trường bị khoá sau tường phí trả về 000.00 kèm isLock và đã được đổi thành null, KHÔNG phải 0. Universe = TOPIX Core30/Large70/Mid400, không phải toàn sàn.",
+  "snapshots": [
+    {
+      "code": "1332",
+      "price": 1117,
+      "per": 11.68,
+      "pbr": 1.11,
+      "eps": 95.62,
+      "bps": 1007.71,
+      "perBasis": "（予想）",
+      "epsBasis": "（予想）",
+      "updatedAt": "2026-09-29T09:00:00+09:00"
+    },
+    {
+      "code": "1333",
+      "price": 1240.5,
+      "per": 12.47,
+      "pbr": 0.76,
+      "eps": 99.51,
+      "bps": 1639.77,
+      "perBasis": "（予想）",
+      "epsBasis": "（予想）",
+      "updatedAt": "2026-09-29T09:00:00+09:00"
+    },
+    {
+      "code": "1414",
+      "price": 1252.5,
+      "per": 16.21,
+      "pbr": 2.35,
+      "eps": 77.29,
+      "bps": 533.19,
+      "perBasis": "（予想）",
+      "epsBasis": "（予想）",
+      "updatedAt": "2026-09-29T09:00:00+09:00"
+    },
+    {
+      "code": "1417",
+      "price": 3463,
+      "per": 12.01,
+      "pbr": 1.1,
+      "eps": 288.41,
+      "bps": 3135.77,
+      "perBasis": "（予想）",
+      "epsBasis": "（予想）",
+      "updatedAt": "2026-09-29T09:00:00+09:00"
+    },
+    {
+      "code": "1605",
+      "price": 3671,
+      "per": 8.37,
+      "pbr": 0.84,
+      "eps": 438.65,
+      "bps": 4390.36,
+      "perBasis": "（予想）",
+      "epsBasis": "（予想）",
+      "updatedAt": "2026-09-29T09:03:00+09:00"
+    },
+    {
+      "code": "1719",
+      "price": 1810,
+      "per": 12.79,
+      "pbr": 1.32,
+      "eps": 141.51,
+      "bps": 1375.22,
+      "perBasis": "（予想）",
+      "epsBasis": "（予想）",
+      "updatedAt": "2026-09-29T09:00:00+09:00"
+    },
+    {
+      "code": "1721",
+      "price": 5412,
+      "per": 16.52,
+      "pbr": 1.57,
+      "eps": 327.63,
+      "bps": 3438.13,
+      "perBasis": "（予想）",
+      "epsBasis": "（予想）",
+      "updatedAt": "2026-09-29T09:00:00+09:00"
+    },
+    {
+      "code": "1801",
+      "price": 11950,
+      "per": 12.9,
+      "pbr": 2.09,
+      "eps": 926.33,
+      "bps": 5724.9,
+      "perBasis": "（予想）",
+      "epsBasis": "（予想）",
+      "updatedAt": "2026-09-29T09:00:00+09:00"
+    },
+    {
+      "code": "1802",
+      "price": 2952.5,
+      "per": 12.93,
+      "pbr": 1.63,
+      "eps": 228.39,
+      "bps": 1810.3,
+      "perBasis": "（予想）",
+      "epsBasis": "（予想）",
+      "updatedAt": "2026-09-29T09:00:00+09:00"
+    },
+    {
+      "code": "1803",
+      "price": 2096.5,
+      "per": 8.6,
+      "pbr": 1.4,
+      "eps": 243.69,
+      "bps": 1494.42,
+      "perBasis": "（予想）",
+      "epsBasis": "（予想）",
+      "updatedAt": "2026-09-29T09:00:00+09:00"
+    },
+    {
+      "code": "1808",
+      "price": 2595.5,
+      "per": 10.41,
+      "pbr": 1.21,
+      "eps": 249.24,
+      "bps": 2151.66,
+      "perBasis": "（予想）",
+      "epsBasis": "（予想）",
+      "updatedAt": "2026-09-29T09:00:00+09:00"
+    },
+    {
+      "code": "1812",
+      "price": 4847,
+      "per": 13.25,
+      "pbr": 1.63,
+      "eps": 365.91,
+      "bps": 2967.69,
+      "perBasis": "（予想）",
+      "epsBasis": "（予想）",
+      "updatedAt": "2026-09-29T09:00:00+09:00"
+    }
+  ]
+}
