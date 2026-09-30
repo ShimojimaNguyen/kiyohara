@@ -8,7 +8,10 @@
   --color-surface: #1c201c;
   --color-fg: #eceae1;
   --color-fg-muted: #9b9d93;
-  --color-fg-subtle: #6f736b;
+  /* #6f736b chỉ đạt 3.41:1 trên --color-surface — dưới ngưỡng chữ thường
+     WCAG 2.2 AA. Nâng độ sáng (nền TỐI nên sáng lên mới tăng tương phản),
+     giữ nguyên sắc. Kiểm: py ../stock-shared/tools/contrast.py --all */
+  --color-fg-subtle: #83887F;
   --color-accent: #d7ddd0;
   --color-up: #8aa583;
   --color-down: #c57d76;
